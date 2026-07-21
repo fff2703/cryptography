@@ -1,0 +1,6 @@
+salt.salt
+*.salt
+__pycache__/
+.venv/
+venv/
+.vscode/
