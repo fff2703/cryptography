@@ -2,25 +2,6 @@ from permutations import permute, E, P, IP, FP
 from sboxes import substitute
 from utils import xor_bytes, split_block
 
-def split_block(block):
-    """
-    Splits a block of bytes into two halves.
-
-    Args:
-        block (str): The block of bytes to be split
-
-    Returns:
-        tuple: A tuple containing the left and right halves of the block
-    """
-    if len(block) != 64:
-        raise ValueError("Block length must be 64 bits to split into two 32-bit halves")
-
-    mid = 32  # Calculated the midpoint of the block
-    left_half = block[:mid]
-    right_half = block[mid:]
-    return left_half, right_half
-
-
 def expand(right_half):
     """
     Expands a 32-bit half-block to 48 bits using the expansion permutation
@@ -114,7 +95,7 @@ def des_rounds(left_half, right_half, round_keys):
         raise ValueError("Each round key must be 48 bits long")
 
     for round_key in round_keys:
-        left_half, right_half = des_round(left_half, right_half, round_key) ## Update both halves with the result of one DES round (multiply assignment)
+        left_half, right_half = des_round(left_half, right_half, round_key) # Update both halves with the result of one DES round (multiple assignment)
     return left_half, right_half
 
 def encrypt_block(block, round_keys):
@@ -132,6 +113,8 @@ def encrypt_block(block, round_keys):
         raise ValueError("Block length must be 64 bits for DES encryption")
     if len(round_keys) != 16:
         raise ValueError("There must be exactly 16 round keys for DES encryption")
+    if any(len(key) != 48 for key in round_keys):
+        raise ValueError("Each round key must be 48 bits long")
 
     # Step 1: Initial Permutation
     permuted_block = permute(block, IP)
@@ -185,3 +168,82 @@ def decrypt_block(block, round_keys):
     decrypted_block = permute(combined_block, FP)
 
     return decrypted_block
+
+def text_to_binary(text):
+    """
+    Converts a string of text to its binary representation
+
+    Args:
+        text (str): The input string
+
+    Returns:
+        str: A binary string representing the input text
+    """
+    return ''.join(format(ord(char), '08b') for char in text)
+
+def binary_to_text(binary):
+    """
+    Converts a binary string back to its text representation
+
+    Args:
+        binary (str): The input binary string
+
+    Returns:
+        str: The text representation of the binary string
+    """
+    if len(binary) % 8 != 0:
+        raise ValueError("Binary string length must be a multiple of 8 to convert to text")
+
+    return ''.join(chr(int(binary[i:i + 8], 2)) for i in range(0, len(binary), 8))
+
+def add_padding(binary):
+    """
+    Adds PKCS#7-style padding to a binary string.
+
+    Args:
+        binary (str): The input binary string.
+
+    Returns:
+        str: The padded binary string.
+    """
+    if len(binary) % 8 != 0:
+        raise ValueError("Binary string length must be a multiple of 8")
+
+    block_size = 64  # bits
+
+    padding_bits = block_size - (len(binary) % block_size)
+
+    if padding_bits == 0:
+        padding_bits = block_size
+
+    padding_bytes = padding_bits // 8
+
+    padding = format(padding_bytes, "08b") * padding_bytes
+
+    return binary + padding
+
+def remove_padding(binary):
+    """
+    Removes PKCS#7-style padding from a binary string.
+
+    Args:
+        binary (str): The padded binary string.
+
+    Returns:
+        str: The original binary string.
+    """
+    if len(binary) % 8 != 0:
+        raise ValueError("Binary string length must be a multiple of 8")
+
+    last_byte = binary[-8:]
+    padding_length = int(last_byte, 2)
+
+    if padding_length < 1 or padding_length > 8:
+        raise ValueError("Invalid padding")
+
+    expected_padding = format(padding_length, "08b") * padding_length
+
+    if binary[-padding_length * 8:] != expected_padding:
+        raise ValueError("Invalid padding")
+
+    return binary[:-padding_length * 8]
