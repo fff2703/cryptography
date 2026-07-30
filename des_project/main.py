@@ -1,7 +1,11 @@
-block = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+from des import encrypt, decrypt
 
-from utils import permute
-from permutations import IP
+key = "0001001100110100010101110111100110011011101111001101111111110001"
 
-result = permute(block, IP)
-print(result)
+plaintext = "Hello DES!"
+
+ciphertext = encrypt(plaintext, key)
+print("Ciphertext:", ciphertext)
+
+decrypted = decrypt(ciphertext, key)
+print("Decrypted:", decrypted)

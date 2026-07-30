@@ -1,6 +1,7 @@
-from permutations import permute, E, P, IP, FP
+from permutations import E, P, IP, FP
+from utils import permute, xor_bytes, split_block
 from sboxes import substitute
-from utils import xor_bytes, split_block
+from key_schedule import generate_round_keys
 
 def expand(right_half):
     """
@@ -249,7 +250,7 @@ def remove_padding(binary):
     return binary[:-padding_length * 8]
 
 
-    def encrypt(plaintext, key):
+def encrypt(plaintext, key):
         """
         Encrypts a plaintext string using DES with the provided key
 
@@ -264,7 +265,7 @@ def remove_padding(binary):
             raise ValueError("Key length must be 64 bits for DES encryption")
 
         if any(bit not in ("0", "1") for bit in key):
-            raise ValueError("Key must contain only 0 and 1")
+            raise ValueError("Key must be a binary string containing only 0s and 1s")
 
         binary_plaintext = text_to_binary(plaintext)
         padded_binary = add_padding(binary_plaintext)
@@ -281,7 +282,7 @@ def remove_padding(binary):
 
         return ''.join(encrypted_blocks)
 
-    def decrypt(ciphertext, key):
+def decrypt(ciphertext, key):
         """
         Decrypts a ciphertext string using DES with the provided key.
 

@@ -1,5 +1,5 @@
 from utils import permute, left_rotate
-from permutations import PC1, PC2
+from permutations import PC1, PC2, SHIFT_SCHEDULE
 
 def permuted_choice_1(key):
     """
@@ -17,17 +17,27 @@ def permuted_choice_1(key):
     return permute(key, PC1)
 
 
-def generate_round_key(key):
+def generate_round_keys(key):
+    """
+    Generates all 16 DES round keys
+
+    Args:
+        key (str): A 64-bit binary DES key.
+
+    Returns:
+        list[str]: A list containing 16 round keys, each 48 bits long
+    """
+    round_keys = []
     key56 = permuted_choice_1(key)
 
     c = key56[:28]
     d = key56[28:]
 
-    c = left_rotate(c, 1)
-    d = left_rotate(d, 1)
+    for shift in SHIFT_SCHEDULE:
+        c = left_rotate(c, shift)
+        d = left_rotate(d, shift)
 
-    combined_key = c + d
+        round_key = permute(c + d, PC2)
+        round_keys.append(round_key)
 
-    round_key = permute(combined_key, PC2)
-
-    return round_key
+    return round_keys
