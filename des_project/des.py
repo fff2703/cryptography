@@ -247,3 +247,79 @@ def remove_padding(binary):
         raise ValueError("Invalid padding")
 
     return binary[:-padding_length * 8]
+
+
+    def encrypt(plaintext, key):
+        """
+        Encrypts a plaintext string using DES with the provided key
+
+        Args:
+            plaintext (str): The input plaintext string
+            key (str): A 64-bit binary string representing the DES key
+
+        Returns:
+            str: The encrypted ciphertext as a binary string
+        """
+        if len(key) != 64:
+            raise ValueError("Key length must be 64 bits for DES encryption")
+
+        if any(bit not in ("0", "1") for bit in key):
+            raise ValueError("Key must contain only 0 and 1")
+
+        binary_plaintext = text_to_binary(plaintext)
+        padded_binary = add_padding(binary_plaintext)
+
+        round_keys = generate_round_keys(key)
+
+        encrypted_blocks = []
+
+        for i in range(0, len(padded_binary), 64):
+            block = padded_binary[i:i + 64]
+            encrypted_blocks.append(
+                encrypt_block(block, round_keys)
+            )
+
+        return ''.join(encrypted_blocks)
+
+    def decrypt(ciphertext, key):
+        """
+        Decrypts a ciphertext string using DES with the provided key.
+
+        Args:
+            ciphertext (str): The input ciphertext as a binary string.
+            key (str): A 64-bit binary string representing the DES key.
+
+        Returns:
+            str: The decrypted plaintext.
+        """
+        if len(key) != 64:
+            raise ValueError("Key length must be 64 bits for DES decryption")
+
+        if any(bit not in ("0", "1") for bit in key):
+            raise ValueError("Key must be a binary string containing only 0s and 1s")
+
+        if len(ciphertext) % 64 != 0:
+            raise ValueError("Ciphertext length must be a multiple of 64 bits")
+
+        if any(bit not in ("0", "1") for bit in ciphertext):
+            raise ValueError("Ciphertext must be a binary string containing only 0s and 1s")
+
+        # Generate round keys
+        round_keys = generate_round_keys(key)
+
+        # Decrypt each 64-bit block
+        decrypted_blocks = []
+
+        for i in range(0, len(ciphertext), 64):
+            block = ciphertext[i:i + 64]
+            decrypted_blocks.append(
+                decrypt_block(block, round_keys)
+            )
+
+        plaintext_binary = ''.join(decrypted_blocks)
+
+        # Remove padding
+        unpadded_binary = remove_padding(plaintext_binary)
+
+        # Convert binary to text
+        return binary_to_text(unpadded_binary)
